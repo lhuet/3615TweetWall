@@ -13,13 +13,17 @@ def jsonSlurper = new JsonSlurper();
 printTweet = {
     sleep(timeSleep)
     println "--"
-    println it.from_user_name + " - " + "@"+it.from_user 
-    List<String> lines = wrapLine(it.text, 80);
+    println deleteAccent(it.from_user_name) + " - " + "@"+it.from_user 
+    List<String> lines = wrapLine(deleteAccent(it.text), 80);
     lines.each {line -> println line}
-    //println it.text
     def dateTweet = Date.parse(it.created_at)
     // Format cible : "14/05/2013 11:41:04"
     println "-- " + String.format("%td/%<tm/%<tY %<tT", dateTweet)
+}
+
+// Workaround pour supprimer les accents sur le minitel (encoding particulier du minitel)
+String deleteAccent(text) {
+    return text.replaceAll("[éèêë]", "e").replaceAll("[äâà]","a").replaceAll("[ûüù]", "u").replaceAll("[ïî]", "i")
 }
 
 // Line wrapper
