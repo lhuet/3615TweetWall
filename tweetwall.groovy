@@ -1,5 +1,6 @@
 #!/usr/bin/env groovy
 import groovy.json.JsonSlurper
+import java.text.Normalizer
 
 // Twitter URL request
 def twitterEndpoint='https://search.twitter.com/search.json?q=breizhcamp&rpp=20'
@@ -7,34 +8,33 @@ def twitterEndpoint='https://search.twitter.com/search.json?q=breizhcamp&rpp=20'
 def timeSleep = 2000
 
 // Json Parser
-def jsonSlurper = new JsonSlurper();
+def jsonSlurper = new JsonSlurper()
 
 // Tweet printer
 printTweet = {
     sleep(timeSleep)
-    println "--"
-    println removeAccent(it.from_user_name) + " - " + "@"+it.from_user 
-    List<String> lines = wrapLine(removeAccent(it.text), 80);
-    lines.each {line -> println line}
+    println '--'
+    println "${removeAccent(it.from_user_name)} - @${it.from_user }"
+    wrapLine(removeAccent(it.text), 80).each { println it }    
     def dateTweet = Date.parse(it.created_at)
     // Format cible : "14/05/2013 11:41:04"
-    println "-- " + String.format("%td/%<tm/%<tY %<tT", dateTweet)
+    println "-- ${String.format('%td/%<tm/%<tY %<tT', dateTweet)}"
 }
 
 // Workaround pour supprimer les accents sur le minitel (encoding particulier du minitel)
 String removeAccent(text) {
     // Thanks to @glaforge : http://glaforge.appspot.com/article/how-to-remove-accents-from-a-string
-    return return Normalizer.normalize(text, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+    Normalizer.normalize(text, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
 }
 
 // Line wrapper
 // From : http://groovy.codehaus.org/Formatting+simple+tabular+text+data
 List<String> wrapLine(input, lineWidth) {
-    List<String>  lines = []
-    def           line = ""
-    def           addWord;
+    def lines = []
+    def line = ""
+    def addWord
 
-    addWord = {word ->
+    addWord = { word ->
       // Add new word if we have space in current line
       if ((line.size() + word.size()) <= lineWidth) {
         line <<= word
@@ -43,33 +43,33 @@ List<String> wrapLine(input, lineWidth) {
         // Our word is longer than line width, break it up
       } else if (word.size() > lineWidth) {
         def len = lineWidth - line.length()
-        line <<= word.substring(0, len)
+        line <<= word[0..len]
         word = word.substring(len)
-        lines += line.toString()
+        lines << line
 
         while (word.size() > lineWidth) {
-          lines += word.substring(0, lineWidth);
-          word = word.substring(lineWidth);
+          lines += word[0..lineWidth]
+          word = word.substring(lineWidth)
         }
         line = word
         if (line.size() > 0 && line.size() < lineWidth)
           line <<= " "
         // No more space in line - wrap to another line
       } else {
-        lines += line.toString()
+        lines << line
         line = ""
 
         addWord(word)
       }
     }
 
-    input.split(" ").each() {
+    input.split(" ").each {
       addWord(it)
     }
 
-    lines += line.toString()
+    lines << line
 
-    return lines
+    lines
   }
 
 // Main loop
